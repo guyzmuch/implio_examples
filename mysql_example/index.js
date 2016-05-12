@@ -5,7 +5,7 @@ var http = require("https");
 
 // Required node modules
 var CronJob = require('cron').CronJob;
-var Client = required('mariasql');
+var Client = require('mariasql');
 
 /*
   TODO Enter info related to your own implio application
@@ -35,19 +35,18 @@ var get_options = {
   "hostname": "api.implio.com",
   "path": "/v1/ads?timestamp=",
   "headers": {
-    "content-type": "application/json",
     "x-api-key": implio_api_key
   }
 };
 
 /**
- * This cron job run at every 00 seconds of every minutes to send ads to implio, we are :
+ * This cron job run at every 00 and 30 seconds of every minutes to send ads to implio, we are :
  * - getting the ads from our own database
  * - reformating our result to the implio format
  * - sending the request to implio
  */
-var send_data_to_implio = new CronJob('00 00 * * * *', function(){
-
+var send_data_to_implio = new CronJob('00,30 * * * * *', function(){
+  console.log("send_data_to_implio cron job started");
   var c = new Client();
   c.connect(mysql_config);
 
@@ -58,6 +57,7 @@ var send_data_to_implio = new CronJob('00 00 * * * *', function(){
         console.log('An error have been encountered with the query. error message: ' + err);
       }
       else{
+        console.log("just got the ads from my database");
         var implio_request = [];
         //Here we are going to map our data format, to the data format of implio
         for (var i = 0, iLen = rows.length; i < iLen; i ++){
@@ -74,8 +74,11 @@ var send_data_to_implio = new CronJob('00 00 * * * *', function(){
         }
 
         //then we do the request (we don't care to much right now if it works or not)
-        var req = http.request(send_options, function (res) {});
+        var req = http.request(send_options, function (res) {
+          console.log("implio respond to our post of ads");
+        });
 
+        console.log("sending data to implio");
         req.write(JSON.stringify(implio_request));
         req.end();
 
@@ -86,15 +89,15 @@ var send_data_to_implio = new CronJob('00 00 * * * *', function(){
 }, null, true);
 
 /**
- * This cron job run at every 30 seconds of every minutes to get ads from implio, we are :
+ * This cron job run at every 15 and 45 seconds of every minutes to get ads from implio, we are :
  * - doing a request to implio to get treated ads
  * - looping through the result, and updating our database with them
  */
-var get_data_to_implio = new CronJob('00 30 * * * *', function(){
-
+var get_data_to_implio = new CronJob('15,45 * * * * *', function(){
+  console.log("get_data_to_implio cron job started");
   //we calculate the timestamp to send to implio (for this example, it is just now minus 1 minutes)
   var request_timestamp = (new Date().getTime() - 1000 * 60);
-  get_options.path = "v1/ads?timestamp=" + request_timestamp;
+  get_options.path = "/v1/ads?timestamp=" + request_timestamp;
 
   //Then we do the request
   var req = http.request(get_options, function (res) {
@@ -105,6 +108,7 @@ var get_data_to_implio = new CronJob('00 30 * * * *', function(){
     });
 
     res.on("end", function () {
+      console.log("implio finished to send us his response");
       var body = Buffer.concat(chunks);
       var implio_result = JSON.parse(body);
 
@@ -119,6 +123,7 @@ var get_data_to_implio = new CronJob('00 30 * * * *', function(){
             "ad_id": implio_result.ads[i].ad.id
           }),
           function (err, rows) {
+            console.log("Our database is updated.");
           }
         );
       }
@@ -128,7 +133,7 @@ var get_data_to_implio = new CronJob('00 30 * * * *', function(){
     });
   });
 
-  req.write();
+  console.log("requesting data to implio");
   req.end();
 
 }, null, true);
