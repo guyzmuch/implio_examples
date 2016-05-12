@@ -33,7 +33,7 @@ var send_options = {
 var get_options = {
   "method": "GET",
   "hostname": "api.implio.com",
-  "path": "/v1/ads",
+  "path": "/v1/ads?timestamp=",
   "headers": {
     "content-type": "application/json",
     "x-api-key": implio_api_key
@@ -93,7 +93,7 @@ var send_data_to_implio = new CronJob('00 00 * * * *', function(){
 var get_data_to_implio = new CronJob('00 30 * * * *', function(){
 
   //we calculate the timestamp to send to implio (for this example, it is just now minus 1 minutes)
-  var request_timestamp = (new Date().now().getTime() - 1000 * 60);
+  var request_timestamp = (new Date().getTime() - 1000 * 60);
   get_options.path = "v1/ads?timestamp=" + request_timestamp;
 
   //Then we do the request
