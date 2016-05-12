@@ -14,14 +14,20 @@ You have 3 folders
   - your database information
  b) clean any test database you could have
  mysql -u <username> -p -e "DROP DATABASE implio_test;"
- c) insert the mysql dump (from the root of the project)
+ c) create the test database
+ mysql -u <username> -p -e "CREATE DATABASE implio_test;"
+ d) insert the mysql dump (from the root of the project)
  mysql -u <username> -p implio_test < mysql_example/implio_test__dump.sql
- d) (optional) check that your data are 'raw'
+ e) (optional) check that your data are 'raw'
  mysql -u <username> -p -e "SELECT * FROM implio_test.my_ads;"
- e) run the script
+ f) run the script
  npm node mysql_example/index.js
- f) (optional) check that your data changed
+ g) (optional) check that your data changed
  mysql -u <username> -p -e "SELECT * FROM implio_test.my_ads;"
+
+
+ i) (optional) insert additional data to the database
+ mysql -u <username> -p implio_test < mysql_example/implio_test__insert_more.sql
 
 
 2. SQLite_fake_site
