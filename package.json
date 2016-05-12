@@ -1,0 +1,19 @@
+{
+  "name": "implio_examples",
+  "version": "1.0.0",
+  "description": "Examples to quickly communicate with Implio.",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/guyzmuch/implio_examples.git"
+  },
+  "keywords": [
+    "implio",
+    "tutorial"
+  ],
+  "author": "vincent.bareau@besedo.com",
+  "bugs": {
+    "url": "https://github.com/guyzmuch/implio_examples/issues"
+  },
+  "homepage": "https://github.com/guyzmuch/implio_examples#readme"
+}
