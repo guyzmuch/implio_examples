@@ -32,7 +32,6 @@ var get_options = {
   "hostname": "api.implio.com",
   "path": "/v1/ads?timestamp=",
   "headers": {
-    "content-type": "application/json",
     "x-api-key": implio_api_key
   }
 };
@@ -67,7 +66,8 @@ var db = new sqlite3.Database('databases/implio_test', function(){
          * - reformating our result to the implio format
          * - sending the request to implio
          */
-        var send_data_to_implio = new CronJob('00 00 * * * *', function(){
+        var send_data_to_implio = new CronJob('00 * * * * *', function(){
+          console.log("send_data_to_implio cron job started");
 
           db.run('SELECT * FROM my_ads WHERE implio_treated = 0;',
             function(err, rows) {
@@ -75,6 +75,7 @@ var db = new sqlite3.Database('databases/implio_test', function(){
                 console.log('An error have been encountered with the query. error message: ' + err);
               }
               else{
+                console.log("just got the ads from my database");
                 var implio_request = [];
                 //Here we are going to map our data format, to the data format of implio
                 for (var i = 0, iLen = rows.length; i < iLen; i ++){
@@ -91,8 +92,11 @@ var db = new sqlite3.Database('databases/implio_test', function(){
                 }
 
                 //then we do the request (we don't care to much right now if it works or not)
-                var req = http.request(send_options, function (res) {});
+                var req = http.request(send_options, function (res) {
+                  console.log("implio respond to our post of ads");
+                });
 
+                console.log("sending data to implio");
                 req.write(JSON.stringify(implio_request));
                 req.end();
 
@@ -106,11 +110,12 @@ var db = new sqlite3.Database('databases/implio_test', function(){
          * - doing a request to implio to get treated ads
          * - looping through the result, and updating our database with them
          */
-        var get_data_to_implio = new CronJob('00 30 * * * *', function(){
+        var get_data_to_implio = new CronJob('30 * * * * *', function(){
+          console.log("get_data_to_implio cron job started");
 
           //we calculate the timestamp to send to implio (for this example, it is just now minus 1 minutes)
           var request_timestamp = (new Date().getTime() - 1000 * 60);
-          get_options.path = "v1/ads?timestamp=" + request_timestamp;
+          get_options.path = "/v1/ads?timestamp=" + request_timestamp;
 
           //Then we do the request
           var req = http.request(get_options, function (res) {
@@ -121,6 +126,7 @@ var db = new sqlite3.Database('databases/implio_test', function(){
             });
 
             res.on("end", function () {
+              console.log("implio finished to send us his response");
               var body = Buffer.concat(chunks);
               var implio_result = JSON.parse(body);
 
@@ -130,6 +136,9 @@ var db = new sqlite3.Database('databases/implio_test', function(){
                   {
                     "$implio_decision": implio_result.ads[i].result.outcome,
                     "$ad_id": implio_result.ads[i].ad.id
+                  },
+                  function (err, rows) {
+                    console.log("Our database is updated.");
                   }
                 );
               }
@@ -137,7 +146,7 @@ var db = new sqlite3.Database('databases/implio_test', function(){
             });
           });
 
-          req.write();
+          console.log("requesting data to implio");
           req.end();
 
         }, null, true);
@@ -147,6 +156,7 @@ var db = new sqlite3.Database('databases/implio_test', function(){
          * this function will create new ads with random information
          */
         var create_ad = function(){
+          console.log("Inserting ad in our database");
           db.run("INSERT INTO my_ads " +
             "(`title`, `body`, `location`, `user_name`) VALUES " +
             "($title, $text, $location, $user),",
