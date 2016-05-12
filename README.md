@@ -20,7 +20,7 @@ You have 3 folders
  mysql -u <username> -p -e "SELECT * FROM implio_test.my_ads;"
  e) run the script
  npm node mysql_example/index.js
- F) (optional) check that your data changed
+ f) (optional) check that your data changed
  mysql -u <username> -p -e "SELECT * FROM implio_test.my_ads;"
 
 
