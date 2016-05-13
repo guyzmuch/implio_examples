@@ -37,6 +37,11 @@ var get_options = {
   }
 };
 
+var statistic = {
+  "number_created" : 0,
+  "number_send" : 0,
+  "number_received" : 0
+};
 
 /*
  WE CREATE THE DATABASE IF IT DON'T EXIST
@@ -69,7 +74,6 @@ db.serialize(function() {
     "`decision` varchar(200) DEFAULT NULL" +
     ");",
     function () {
-      console.log("test");
       /*
        END OF THE CREATION OF THE TABLE
        */
@@ -102,6 +106,7 @@ db.serialize(function() {
                 };
 
                 implio_request.push(implio_formated);
+                statistic.number_send = statistic.number_send + rows.length;
 
               }
 
@@ -165,6 +170,8 @@ db.serialize(function() {
               );
             }
 
+            statistic.number_received = statistic.number_received + implio_result.ads.length;
+
           });
         });
 
@@ -189,7 +196,7 @@ db.serialize(function() {
             "$user": get_random_value(fake_data.user)
           }
         );
-
+        statistic.number_created ++;
       };
 
       var get_random_value = function (array_data) {
