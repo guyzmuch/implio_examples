@@ -31,3 +31,6 @@ node_modules
 
 # Optional REPL history
 .node_repl_history
+
+# We don't want to send the database created localy
+SQLite_fake_site/databases
