@@ -1,7 +1,8 @@
 'use strict';
 
 // Required native nodejs
-var http = require("https");
+var http = require("http");
+var https = require("https");
 var fs = require("fs");
 
 // Required node modules
@@ -106,12 +107,13 @@ db.serialize(function() {
                 };
 
                 implio_request.push(implio_formated);
-                statistic.number_send = statistic.number_send + rows.length;
 
               }
 
+              statistic.number_send = statistic.number_send + rows.length;
+
               //then we do the request (we don't care to much right now if it works or not)
-              var req = http.request(send_options, function (res) {
+              var req = https.request(send_options, function (res) {
                 var chunks = [];
 
                 res.on("data", function (chunk) {
@@ -145,7 +147,7 @@ db.serialize(function() {
         get_options.path = "/v1/ads?timestamp=" + request_timestamp;
 
         //Then we do the request
-        var req = http.request(get_options, function (res) {
+        var req = https.request(get_options, function (res) {
           var chunks = [];
 
           res.on("data", function (chunk) {
@@ -157,20 +159,22 @@ db.serialize(function() {
             var body = Buffer.concat(chunks);
             var implio_result = JSON.parse(body);
 
-            //Once we got the result, we are going to update our database with the information received (for each ad)
-            for (var i = 0, iLen = implio_result.ads.length; i < iLen; i++) {
-              db.run('UPDATE my_ads SET time_retrieved=NOW(), implio_treated=1, decision=$implio_decision WHERE id=$ad_id;',
-                {
-                  "$implio_decision": implio_result.ads[i].result.outcome,
-                  "$ad_id": implio_result.ads[i].ad.id
-                },
-                function (err, rows) {
-                  console.log("Our database is updated.");
-                }
-              );
-            }
+            if(implio_result.ads && implio_result.ads.length){
+              //Once we got the result, we are going to update our database with the information received (for each ad)
+              for (var i = 0, iLen = implio_result.ads.length; i < iLen; i++) {
+                db.run('UPDATE my_ads SET time_retrieved=NOW(), implio_treated=1, decision=$implio_decision WHERE id=$ad_id;',
+                  {
+                    "$implio_decision": implio_result.ads[i].result.outcome,
+                    "$ad_id": implio_result.ads[i].ad.id
+                  },
+                  function (err, rows) {
+                    console.log("Our database is updated.");
+                  }
+                );
+              }
 
-            statistic.number_received = statistic.number_received + implio_result.ads.length;
+              statistic.number_received = statistic.number_received + implio_result.ads.length;
+            }
 
           });
         });
@@ -217,3 +221,28 @@ db.serialize(function() {
 
     });
 });
+
+
+/*
+WE CREATE A SERVER JUST TO HAVE SOMEWHERE TO SEE THE STATISTIC
+ */
+http.createServer(function (req, res) {
+  res.end(
+`<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Implio Statistic</title>
+  </head>
+
+  <body>
+    <h3>Implio Statistic</h3>
+    <div>
+      <p><strong>Number of ad created : </strong>` + statistic.number_created + `</p>
+      <p><strong>Number of ad send : </strong>` + statistic.number_send + `</p>
+      <p><strong>Number of ad received : </strong>` + statistic.number_received + `</p>
+    </div>
+  </body>
+</html>`
+  );
+}).listen(8000);
