@@ -62,7 +62,7 @@ var send_data_to_implio = new CronJob('00,30 * * * * *', function(){
         //Here we are going to map our data format, to the data format of implio
         for (var i = 0, iLen = rows.length; i < iLen; i ++){
           var implio_formated = {
-            "id": rows[i].id || 1,
+            "id": rows[i].id.toString() || "1",
             "content": {
               "title": rows[i].title,
               "body": rows[i].body
