@@ -88,7 +88,7 @@ db.serialize(function() {
       var send_data_to_implio = new CronJob('00 * * * * *', function () {
         console.log("send_data_to_implio cron job started");
 
-        db.all('SELECT * FROM my_ads WHERE implio_treated = 0;;',
+        db.all('SELECT * FROM my_ads WHERE implio_treated = 0;',
           function (err, rows) {
             if (err) {
               console.log('An error have been encountered with the query. error message: ' + err);
@@ -162,7 +162,7 @@ db.serialize(function() {
             if(implio_result.ads && implio_result.ads.length){
               //Once we got the result, we are going to update our database with the information received (for each ad)
               for (var i = 0, iLen = implio_result.ads.length; i < iLen; i++) {
-                db.run('UPDATE my_ads SET time_retrieved=NOW(), implio_treated=1, decision=$implio_decision WHERE id=$ad_id;',
+                db.run('UPDATE my_ads SET time_retrieved=date(\'now\'), implio_treated=1, decision=$implio_decision WHERE id=$ad_id;',
                   {
                     "$implio_decision": implio_result.ads[i].result.outcome,
                     "$ad_id": implio_result.ads[i].ad.id
@@ -212,7 +212,7 @@ db.serialize(function() {
        * (creating a new 'setTimeout' every time with a new random time)
        */
       (function loop() {
-        var rand = Math.round(Math.random() * (3000 - 500)) + 500; // generate new time (between 3sec and 500ms)
+        var rand = Math.round(Math.random() * (10000 - 3000)) + 3000; // generate new time (between 10 and 3sec)
         setTimeout(function () {
           create_ad();
           loop();
@@ -226,13 +226,51 @@ db.serialize(function() {
 /*
 WE CREATE A SERVER JUST TO HAVE SOMEWHERE TO SEE THE STATISTIC
  */
+
+var display_database_result = function(callback){
+  db.all('SELECT * FROM my_ads ORDER BY id DESC LIMIT 20',
+    function (err, rows) {
+      if (err) {
+        console.log('An error have been encountered with the query. error message: ' + err);
+        return "<div><p>Error getting the data from the database.</p></div>"
+      }
+      else {
+        var html ="<div><table><tbody>";
+        //console.log("rows : "+rows);
+        //console.log("rows : "+JSON.stringify(rows));
+        for (var i = 0, iLen = rows.length; i < iLen; i++) {
+          html += "<tr>";
+          for (var colunmName in rows[i]) {
+            html += "<td>"+rows[i][colunmName]+"</td>";
+          }
+          html += "</tr>";
+        }
+
+
+        html += "</tbody></table></div>";
+        callback(html);
+      }
+    }
+  );
+};
+
 http.createServer(function (req, res) {
-  res.end(
+  display_database_result(function(result){
+    res.end(
 `<!DOCTYPE html>
 <html>
   <head>
     <meta charset="UTF-8">
     <title>Implio Statistic</title>
+    <style>
+      table {
+        border-collapse: collapse;
+      }
+
+      table, th, td {
+        border: 1px solid black;
+      }
+    </style>
   </head>
 
   <body>
@@ -242,7 +280,12 @@ http.createServer(function (req, res) {
       <p><strong>Number of ad send : </strong>` + statistic.number_send + `</p>
       <p><strong>Number of ad received : </strong>` + statistic.number_received + `</p>
     </div>
+    <div>`+
+      result +
+    `</div>
   </body>
 </html>`
-  );
+    );
+  });
+
 }).listen(8000);

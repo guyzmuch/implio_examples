@@ -44,7 +44,7 @@ You have 3 folders
   This example will create a SQLite database, then :
    - will send ads every xx:00, and xx:30 (xx are minutes)
    - will retrieve ads every xx:15, and xx:45 (xx are minutes)
-   - will create new ads at random time (betweeen 3 and 0.5 seconds)
+   - will create new ads at random time (betweeen 10 and 3 seconds)
   It pick ads to send to implio from the database, and update this database with implio decision.
   You can also check some statistic from on page
 
