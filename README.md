@@ -58,5 +58,9 @@ You have 3 folders
  c) go to the path to see statistic on what is happening (number got reseted every time you reload the application)
  http://localhost:8000/
 
+
+ d) (optional) since it is SQLite, to clean up everything, just remove the DB file
+ rm SQLite_fake_site/databases/implio_test.db
+
 3. implio_webhooks
 
