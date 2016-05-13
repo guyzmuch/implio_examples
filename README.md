@@ -21,7 +21,7 @@ You have 3 folders
  e) (optional) check that your data are 'raw'
  mysql -u <username> -p -e "SELECT * FROM implio_test.my_ads;"
  f) run the script
- npm node mysql_example/index.js
+ node mysql_example/index.js
  g) (optional) check that your data changed
  mysql -u <username> -p -e "SELECT * FROM implio_test.my_ads;"
 
@@ -31,6 +31,12 @@ You have 3 folders
 
 
 2. SQLite_fake_site
+ a) open SQLite_fake_site/index.js file in your favorite IDE, and fill the info about
+  - your implio api key
+ b) run the script
+ node SQLite_fake_site/index.js
+ c) go to the path to see statistic on what is happening (number got reseted every time you reload the application)
+ http://localhost:8000/
 
 3. implio_webhooks
 
