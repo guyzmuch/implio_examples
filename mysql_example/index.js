@@ -93,8 +93,8 @@ var send_data_to_implio = new CronJob('00,30 * * * * *', function(){
  * - doing a request to implio to get treated ads
  * - looping through the result, and updating our database with them
  */
-var get_data_to_implio = new CronJob('15,45 * * * * *', function(){
-  console.log("get_data_to_implio cron job started");
+var get_data_from_implio = new CronJob('15,45 * * * * *', function(){
+  console.log("get_data_from_implio cron job started");
   //we calculate the timestamp to send to implio (for this example, it is just now minus 1 minutes)
   var request_timestamp = (new Date().getTime() - 1000 * 60);
   get_options.path = "/v1/ads?timestamp=" + request_timestamp;
