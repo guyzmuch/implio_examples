@@ -47,6 +47,11 @@ var statistic = {
 /*
  WE CREATE THE DATABASE IF IT DON'T EXIST
  */
+var dir = './SQLite_fake_site/databases';
+if (!fs.existsSync(dir)){
+    fs.mkdirSync(dir);
+}
+
 var file = "SQLite_fake_site/databases/implio_test.db";
 var exists = fs.existsSync(file);
 
