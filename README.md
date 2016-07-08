@@ -23,28 +23,28 @@ You have 3 folders
   - your database information 
    
   
- b) clean any test database you could have
- mysql -u <username> -p -e "DROP DATABASE implio_test;" 
+ b) clean any test database you could have  
+ mysql -u __>>username<<__ -p -e "DROP DATABASE implio_test;" 
 
- c) create the test database
- mysql -u <username> -p -e "CREATE DATABASE implio_test;" 
+ c) create the test database  
+ mysql -u __>>username<<__ -p -e "CREATE DATABASE implio_test;" 
  
- d) insert the mysql dump (from the root of the project)
- mysql -u <username> -p implio_test < mysql_example/implio_test__dump.sql 
+ d) insert the mysql dump (from the root of the project)  
+ mysql -u __>>username<<__ -p implio_test < mysql_example/implio_test__dump.sql 
  
- e) (optional) check that your data are 'raw'
- mysql -u <username> -p -e "SELECT * FROM implio_test.my_ads;" 
+ e) (optional) check that your data are 'raw'  
+ mysql -u __>>username<<__ -p -e "SELECT * FROM implio_test.my_ads;" 
  
- f) run the script
- node mysql_example/index.js 
+ f) run the script  
+ node mysql_example/index.js   
  
  
- g) (optional) check that your data changed
- mysql -u <username> -p -e "SELECT * FROM implio_test.my_ads;" 
+ g) (optional) check that your data changed  
+ mysql -u __>>username<<__ -p -e "SELECT * FROM implio_test.my_ads;"   
 
 
  i) (optional) insert additional data to the database
- mysql -u <username> -p implio_test < mysql_example/implio_test__insert_more.sql
+ mysql -u __>>username<<__ -p implio_test < mysql_example/implio_test__insert_more.sql
 
 
 2. SQLite_fake_site
@@ -63,15 +63,15 @@ You have 3 folders
   - your implio api key
    
   
- b) run the script
+ b) run the script  
  node SQLite_fake_site/index.js
 
- c) go to the path to see statistic on what is happening (number got reseted every time you reload the application)
+ c) go to the path to see statistic on what is happening (number got reseted every time you reload the application)  
  http://localhost:8000/
 
 
 
- d) (optional) since it is SQLite, to clean up everything, just remove the DB file
+ d) (optional) since it is SQLite, to clean up everything, just remove the DB file  
  rm SQLite_fake_site/databases/implio_test.db
 
 3. implio_webhooks
