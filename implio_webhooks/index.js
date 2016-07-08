@@ -4,6 +4,7 @@
 var http = require("http");
 var https = require("https");
 var fs = require("fs");
+var qs = require('querystring');
 
 // Required node modules
 var CronJob = require('cron').CronJob;
@@ -16,6 +17,7 @@ var fake_data = require('./fake_data.js');
   TODO Enter info related to your own implio application
  */
 var implio_api_key = "<MY IMPLIO KEY>";
+var webhook_port = "<MY ACCESS PORT>";
 
 
 // option needed to send ads to implio
@@ -29,15 +31,6 @@ var send_options = {
   }
 };
 
-var get_options = {
-  "method": "GET",
-  "hostname": "api.implio.com",
-  "path": "/v1/ads?timestamp=",
-  "headers": {
-    "x-api-key": implio_api_key
-  }
-};
-
 var statistic = {
   "number_created" : 0,
   "number_send" : 0,
@@ -47,12 +40,12 @@ var statistic = {
 /*
  WE CREATE THE DATABASE IF IT DON'T EXIST
  */
-var dir = './SQLite_fake_site/databases';
+var dir = './implio_webhooks/databases';
 if (!fs.existsSync(dir)){
     fs.mkdirSync(dir);
 }
 
-var file = "SQLite_fake_site/databases/implio_test.db";
+var file = "implio_webhooks/databases/implio_test.db";
 var exists = fs.existsSync(file);
 
 if(!exists) {
@@ -75,6 +68,7 @@ db.serialize(function() {
     "`body` text NOT NULL, " +
     "`location` varchar(250) NOT NULL, " +
     "`user_name` varchar(250) NOT NULL, " +
+    "`send_to_implio` int(11) NOT NULL DEFAULT '0', " +
     "`implio_treated` int(11) NOT NULL DEFAULT '0', " +
     "`time_retrieved` datetime DEFAULT NULL, " +
     "`decision` varchar(200) DEFAULT NULL" +
@@ -85,37 +79,33 @@ db.serialize(function() {
        */
 
       /**
-       * This cron job run at every 00 seconds of every minutes to send ads to implio, we are :
+       * This cron job run at every 00 and 30 seconds of every minutes to send ads to implio, we are :
        * - getting the ads from our own database
+       * - looping through each ads, to send then one by one, updating the database
        * - reformating our result to the implio format
        * - sending the request to implio
        */
-      var send_data_to_implio = new CronJob('00 * * * * *', function () {
+      var send_data_to_implio = new CronJob('00,30 * * * * *', function () {
         console.log("send_data_to_implio cron job started");
 
-        db.all('SELECT * FROM my_ads WHERE implio_treated = 0;',
-          function (err, rows) {
+        db.send_to_implio('SELECT * FROM my_ads WHERE send_to_implio = 0;',
+          function (err, row) {
             if (err) {
               console.log('An error have been encountered with the query. error message: ' + err);
             }
             else {
-              console.log("just got the ads from my database");
-              var implio_request = [];
+              console.log("just got one ads from my database");
+
               //Here we are going to map our data format, to the data format of implio
-              for (var i = 0, iLen = rows.length; i < iLen; i++) {
-                var implio_formated = {
-                  "id": rows[i].id.toString() || "1",
-                  "content": {
-                    "title": rows[i].title,
-                    "body": rows[i].body
-                  }
-                };
+              var implio_request = [{
+                "id": row.id.toString() || "1",
+                "content": {
+                  "title": row.title,
+                  "body": row.body
+                }
+              }];
 
-                implio_request.push(implio_formated);
-
-              }
-
-              statistic.number_send = statistic.number_send + rows.length;
+              statistic.number_send = statistic.number_send++;
 
               //then we do the request (we don't care to much right now if it works or not)
               var req = https.request(send_options, function (res) {
@@ -130,9 +120,19 @@ db.serialize(function() {
                 });
               });
 
-              console.log("sending data to implio");
+              //console.log("sending one ad to implio");
               req.write(JSON.stringify(implio_request));
               req.end();
+
+              //Finally, we update the database, to tell that this ad have been send to implio
+              db.run('UPDATE my_ads SET send_to_implio=1 WHERE id=$ad_id;',
+                {
+                  "$ad_id": row.id
+                },
+                function (err, rows) {
+                  //console.log("Our ad is updated with 'send_to_implio'.");
+                }
+              );
 
             }
           }
@@ -140,54 +140,36 @@ db.serialize(function() {
       }, null, true);
 
       /**
-       * This cron job run at every 30 seconds of every minutes to get ads from implio, we are :
+       * This function is called everytime implio call our webhooks, we are :
        * - doing a request to implio to get treated ads
        * - looping through the result, and updating our database with them
        */
-      var get_data_from_implio = new CronJob('30 * * * * *', function () {
-        console.log("get_data_from_implio cron job started");
+      var get_data_from_implio = function (implio_response) {
+        console.log("Got one ad back from implio");
 
-        //we calculate the timestamp to send to implio (for this example, it is just now minus 1 minutes)
-        var request_timestamp = (new Date().getTime() - 1000 * 60);
-        get_options.path = "/v1/ads?timestamp=" + request_timestamp;
+        console.log("implio_response : "+implio_response)
+        console.log("implio_response : "+JSON.stringify(implio_response));
 
-        //Then we do the request
-        var req = https.request(get_options, function (res) {
-          var chunks = [];
+        var implio_result = JSON.parse(implio_response);
 
-          res.on("data", function (chunk) {
-            chunks.push(chunk);
-          });
-
-          res.on("end", function () {
-            console.log("implio finished to send us his response");
-            var body = Buffer.concat(chunks);
-            var implio_result = JSON.parse(body);
-
-            if(implio_result.ads && implio_result.ads.length){
-              //Once we got the result, we are going to update our database with the information received (for each ad)
-              for (var i = 0, iLen = implio_result.ads.length; i < iLen; i++) {
-                db.run('UPDATE my_ads SET time_retrieved=date(\'now\'), implio_treated=1, decision=$implio_decision WHERE id=$ad_id;',
-                  {
-                    "$implio_decision": implio_result.ads[i].result.outcome,
-                    "$ad_id": implio_result.ads[i].ad.id
-                  },
-                  function (err, rows) {
-                    console.log("Our database is updated.");
-                  }
-                );
+        if(implio_result.ads && implio_result.ads.length){
+          //Once we got the result, we are going to update our database with the information received (for each ad)
+          for (var i = 0, iLen = implio_result.ads.length; i < iLen; i++) {
+            db.run('UPDATE my_ads SET time_retrieved=date(\'now\'), implio_treated=1, decision=$implio_decision WHERE id=$ad_id;',
+              {
+                "$implio_decision": implio_result.ads[i].result.outcome,
+                "$ad_id": implio_result.ads[i].ad.id
+              },
+              function (err, rows) {
+                console.log("Our database is updated.");
               }
+            );
+          }
 
-              statistic.number_received = statistic.number_received + implio_result.ads.length;
-            }
+          statistic.number_received = statistic.number_received + implio_result.ads.length;
+        }
 
-          });
-        });
-
-        console.log("requesting data to implio");
-        req.end();
-
-      }, null, true);
+      };
 
 
       /**
@@ -259,6 +241,7 @@ var display_database_result = function(callback){
   );
 };
 
+//Server for statistic
 http.createServer(function (req, res) {
   display_database_result(function(result){
     res.end(
@@ -294,3 +277,27 @@ http.createServer(function (req, res) {
   });
 
 }).listen(8000);
+
+
+//Server for imlio webhook
+http.createServer(function (req, res) {
+  if (request.method == 'POST') {
+        var body = '';
+        request.on('data', function (data) {
+            body += data;
+            if (body.length > 1e6) {
+                request.connection.destroy();
+            }
+        });
+        request.on('end', function () {
+          comnsole.log("got a request");
+          //we call the function to treat the response
+          //But then don't care if it fail or not, we say 'ok' to implio
+          get_data_from_implio(qs.parse(body));
+          res.end('OK');
+        });
+    }
+    else{
+      res.end('OK');
+    }
+}).listen(webhook_port);
