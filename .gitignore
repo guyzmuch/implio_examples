@@ -34,3 +34,4 @@ node_modules
 
 # We don't want to send the database created localy
 SQLite_fake_site/databases
+implio_webhooks/databases
