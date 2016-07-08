@@ -15,7 +15,7 @@ You have 3 folders
    - will retrieve ads every xx:15, and xx:45 (xx are minutes)  
   It pick ads to send to implio from the database, and update this database with implio decision
 
-  /!\ this is a simple application that don't deal with errors (we expect everything to work fine)
+  __/!\ this is a simple application that don't deal with errors (we expect everything to work fine)__
 
 
  a) open mysql_example/index.js file in your favorite IDE, and fill the info about
@@ -56,7 +56,7 @@ You have 3 folders
   It pick ads to send to implio from the database, and update this database with implio decision.  
   You can also check some statistic from on page
 
-  /!\ this is a simple application that don't deal with errors (we expect everything to work fine)
+  __/!\ this is a simple application that don't deal with errors (we expect everything to work fine)__
 
 
  a) open SQLite_fake_site/index.js file in your favorite IDE, and fill the info about
