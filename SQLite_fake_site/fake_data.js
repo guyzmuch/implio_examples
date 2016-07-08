@@ -138,7 +138,7 @@ module.exports.location = [
   "NoThingfjord",
   "Octarine Grass Country",
   "Ohulan Cutash",
-  "Oi Dong (see also History Monks & Enlightenment country)",
+  "Oi Dong",
   "Pseudopolis",
   "Quirm",
   "Rehigreed Province",
