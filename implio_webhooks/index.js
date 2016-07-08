@@ -290,7 +290,7 @@ http.createServer(function (req, res) {
             }
         });
         request.on('end', function () {
-          comnsole.log("got a request");
+          console.log("got a request");
           //we call the function to treat the response
           //But then don't care if it fail or not, we say 'ok' to implio
           get_data_from_implio(qs.parse(body));
